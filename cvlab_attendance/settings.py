@@ -31,13 +31,17 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    'channels',
     "polls.apps.PollsConfig",
+    "attendance.apps.AttendanceConfig",
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'storages',
+    'rest_framework',
 ]
 
 MIDDLEWARE = [
@@ -86,6 +90,16 @@ DATABASES = {
     }
 }
 
+# AWS S3 설정
+AWS_ACCESS_KEY_ID = 'AKIAVJL3SXU76YJQRVLB'
+AWS_SECRET_ACCESS_KEY = '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'
+AWS_STORAGE_BUCKET_NAME = 'slowybucket'
+AWS_S3_REGION_NAME = 'ap-northeast-2'
+
+# CSFR 설정
+CSRF_COOKIE_SECURE = False
+
+
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
@@ -127,3 +141,12 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# SOCKET 설정
+ASGI_APPLICATION = "cvlab_attendance.asgi.application"
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels.layers.InMemoryChannelLayer",
+    },
+}
