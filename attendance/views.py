@@ -1,13 +1,21 @@
+import base64
+import io
+import json
 import uuid
+from io import BytesIO
 
 import boto3
+import cv2
+import numpy as np
 from django.conf import settings
+from django.core.files.base import ContentFile
 from django.db import transaction
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render, get_object_or_404
 from django.utils import timezone
 from rest_framework.decorators import api_view, parser_classes
-from rest_framework import serializers
+from rest_framework import serializers, status
+from PIL import Image as img
 from rest_framework.parsers import MultiPartParser
 from rest_framework.response import Response
 
@@ -59,9 +67,39 @@ def sign_up(request):
     return Response({'message': 'File uploaded successfully.'})
 
 
+
+def save_image_from_bytes(bytes_data):
+    image = Image.open(io.BytesIO(bytes_data))
+    image.save('image.jpg')
+
+
+@api_view(['POST'])
+def face_recognition(request):
+
+    data = request.data
+    file = data['file']
+
+
 @api_view(['GET'])
 def member_detail(request, member_id):
     member = get_object_or_404(Member, id=member_id)
     data = {'name': member.name, 'pin': member.pin, 'regist_time': member.regist_time}
     return JsonResponse(data)
+
+
+@api_view(['GET'])
+def member_all(request):
+    queryset = Member.objects.all()
+    members = list(queryset)
+    data = [{'name': member.name, 'pin': "****", 'regist_time': member.regist_time, 'image_url': settings.IMAGE_BASE_URL + member.image.storeFileName} for member in members]
+    print(len(data))
+    return JsonResponse(data, safe=False)
+
+
+@api_view(['GET'])
+def makePredictData(request):
+    queryset = Member.objects.all()
+    members = list(queryset)
+    data = [{'member_id': member.id, 'image_url': settings.IMAGE_BASE_URL + member.image.storeFileName} for member in members]
+    return JsonResponse(data, safe=False)
 

@@ -16,16 +16,13 @@ from django.core.asgi import get_asgi_application
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'cvlab_attendance.settings')
 
-
 import attendance.routing
 
 application = ProtocolTypeRouter({
     "http": get_asgi_application(),
-    "websocket": AllowedHostsOriginValidator(
-        AuthMiddlewareStack(
-            URLRouter(
-                attendance.routing.websocket_urlpatterns  # chat 은 routing.py 가 들어있는 앱 이름
-            )
+    "websocket": AuthMiddlewareStack(
+        URLRouter(
+            attendance.routing.websocket_urlpatterns
         )
     ),
 })
