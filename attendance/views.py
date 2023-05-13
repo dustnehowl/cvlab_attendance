@@ -18,6 +18,7 @@ from rest_framework import serializers, status
 from PIL import Image as img
 from rest_framework.parsers import MultiPartParser
 from rest_framework.response import Response
+from apps import AttendanceConfig
 
 from attendance.models import Member, Image
 from attendance.serializer import MemberSerializer
@@ -47,6 +48,26 @@ class S3ImgUploader:
         return self.originalName, self.url
 
 
+# @transaction.atomic()
+# @api_view(['POST'])
+# @parser_classes([MultiPartParser])
+# def sign_up(request):
+#     data = request.data
+#     file = data['file']
+#     name = data['name']
+#     pin = data['pin']
+#
+#     s3imgUploader = S3ImgUploader(file)
+#     originalName, storeFileName = s3imgUploader.upload()
+#     image = Image(originalFileName=originalName, storeFileName=storeFileName)
+#     image.save()
+#
+#     member = Member(name=name, pin=pin, image=image, regist_time=timezone.now())
+#     member.save()
+#
+#     return Response({'message': 'File uploaded successfully.'})
+
+
 @transaction.atomic()
 @api_view(['POST'])
 @parser_classes([MultiPartParser])
@@ -56,16 +77,14 @@ def sign_up(request):
     name = data['name']
     pin = data['pin']
 
-    s3imgUploader = S3ImgUploader(file)
-    originalName, storeFileName = s3imgUploader.upload()
-    image = Image(originalFileName=originalName, storeFileName=storeFileName)
-    image.save()
-
-    member = Member(name=name, pin=pin, image=image, regist_time=timezone.now())
-    member.save()
-
-    return Response({'message': 'File uploaded successfully.'})
-
+    try:
+        face_encoding = AttendanceConfig.get_face_recognition().face_encoding(file)
+        serialized_data = np.dumps(face_encoding[0])
+        member = Member(name=name, pin=pin, face_encoding=serialized_data, regist_time=timezone.now())
+        member.save()
+        return Response({'message': 'User regist successfully.'})
+    except:
+        return Response({'error': 'Face not found.'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 def save_image_from_bytes(bytes_data):
@@ -75,7 +94,6 @@ def save_image_from_bytes(bytes_data):
 
 @api_view(['POST'])
 def face_recognition(request):
-
     data = request.data
     file = data['file']
 
@@ -91,7 +109,8 @@ def member_detail(request, member_id):
 def member_all(request):
     queryset = Member.objects.all()
     members = list(queryset)
-    data = [{'name': member.name, 'pin': "****", 'regist_time': member.regist_time, 'image_url': settings.IMAGE_BASE_URL + member.image.storeFileName} for member in members]
+    data = [{'name': member.name, 'pin': "****", 'regist_time': member.regist_time,
+             'image_url': settings.IMAGE_BASE_URL + member.image.storeFileName} for member in members]
     print(len(data))
     return JsonResponse(data, safe=False)
 
@@ -100,6 +119,6 @@ def member_all(request):
 def makePredictData(request):
     queryset = Member.objects.all()
     members = list(queryset)
-    data = [{'member_id': member.id, 'image_url': settings.IMAGE_BASE_URL + member.image.storeFileName} for member in members]
+    data = [{'member_id': member.id, 'image_url': settings.IMAGE_BASE_URL + member.image.storeFileName} for member in
+            members]
     return JsonResponse(data, safe=False)
-

@@ -15,10 +15,11 @@ class Image(models.Model):
 class Member(models.Model):
     name = models.CharField(max_length=100)
     pin = models.CharField(default="1234", max_length=4)
-    image = models.ForeignKey(
-        Image,
-        on_delete=models.CASCADE,
-    )
+    # image = models.ForeignKey(
+    #     Image,
+    #     on_delete=models.CASCADE,
+    # )
+    face_encoding = models.CharField(max_length=10000)
     regist_time = models.DateTimeField(default=timezone.now)
 
     def __str__(self):

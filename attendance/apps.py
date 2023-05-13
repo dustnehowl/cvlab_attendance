@@ -13,3 +13,6 @@ class AttendanceConfig(AppConfig):
     def ready(self):
         print("ok")
         self.face_recognition = FaceRecognition()
+
+    def get_face_recognition(self):
+        return self.face_recognition
